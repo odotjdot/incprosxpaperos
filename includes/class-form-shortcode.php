@@ -29,31 +29,53 @@ class IncPros_PaperOS_Form_Shortcode {
         ?>
         <div id="incpros-intake-form-wrapper">
             <form id="incpros-intake-form">
-                <h2>Enterprise Establishment (EE)</h2>
-
-                <h3>Customer Information</h3>
-                <label for="customer_name">Name:</label>
-                <input type="text" id="customer_name" name="customer[name]" required>
-
-                <label for="customer_email">Email:</label>
-                <input type="email" id="customer_email" name="customer[email]" required>
-
-                <h3>Entity Information</h3>
-                <label for="entity_name">Company Name:</label>
-                <input type="text" id="entity_name" name="entity[name]" required>
-
-                <label for="entity_type">Entity Type:</label>
-                <select id="entity_type" name="entity[type]">
-                    <option value="llc">LLC</option>
-                    <option value="corp">Corporation</option>
-                </select>
-
-                <br><br>
-                <button type="submit">Submit</button>
+                <h2 id="wizard-step-title">Step 1</h2>
+                <div id="wizard-step-content">
+                    <div class="wizard-step" id="wizard-step-1">
+                        <?php echo $this->render_step_1(); ?>
+                    </div>
+                    <div class="wizard-step" id="wizard-step-2" style="display: none;">
+                        <?php echo $this->render_step_2(); ?>
+                    </div>
+                    <div class="wizard-step" id="wizard-step-3" style="display: none;">
+                        <?php echo $this->render_step_3(); ?>
+                    </div>
+                </div>
+                <div id="wizard-navigation">
+                    <button type="button" id="wizard-back-btn" style="display: none;">Back</button>
+                    <button type="button" id="wizard-next-btn">Next</button>
+                </div>
             </form>
         </div>
         <?php
         return ob_get_clean();
+    }
+
+    /**
+     * Render step 1 of the form.
+     *
+     * @return string The step 1 HTML.
+     */
+    public function render_step_1() {
+        return '<div>Step 1 Content</div>';
+    }
+
+    /**
+     * Render step 2 of the form.
+     *
+     * @return string The step 2 HTML.
+     */
+    public function render_step_2() {
+        return '<div>Step 2 Content</div>';
+    }
+
+    /**
+     * Render step 3 of the form.
+     *
+     * @return string The step 3 HTML.
+     */
+    public function render_step_3() {
+        return '<div>Step 3 Content</div>';
     }
 
     /**
