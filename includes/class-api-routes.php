@@ -2,6 +2,7 @@
 /**
  * Class to handle API routes for PaperOS integration.
  */
+require_once plugin_dir_path( __FILE__ ) . 'lib/class-json-validator.php';
 class IncPros_PaperOS_API_Routes {
 
     /**
@@ -33,13 +34,24 @@ class IncPros_PaperOS_API_Routes {
      * @return WP_REST_Response|WP_Error
      */
     public function handle_intake( $request ) {
+        $signature = $request->get_header( 'X-IncPros-Signature' );
+        $body      = $request->get_body();
+        $hash      = hash_hmac( 'sha256', $body, INCPROS_WEBHOOK_SECRET );
+
+        if ( ! hash_equals( "sha256={$hash}", $signature ) ) {
+            return new WP_Error( 'invalid_signature', 'Invalid signature.', array( 'status' => 401 ) );
+        }
+
         $payload = $request->get_json_params();
 
-        $required_keys = array( 'product', 'customer', 'entity', 'paperos', 'commerce' );
-        foreach ( $required_keys as $key ) {
-            if ( ! isset( $payload[ $key ] ) ) {
-                return new WP_Error( 'missing_key', "Missing required key: {$key}", array( 'status' => 400 ) );
-            }
+        $schema_path = plugin_dir_path( __FILE__ ) . '../schemas/intake.schema.json';
+        $schema      = json_decode( file_get_contents( $schema_path ) );
+
+        $validator = new Json_Schema_Validator();
+        $validator->validate( $payload, $schema );
+
+        if ( ! empty( $validator->getErrors() ) ) {
+            return new WP_Error( 'invalid_payload', 'Invalid payload.', array( 'status' => 422, 'errors' => $validator->getErrors() ) );
         }
 
         error_log( print_r( $payload, true ) );

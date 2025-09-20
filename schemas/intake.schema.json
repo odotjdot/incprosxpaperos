@@ -1,0 +1,418 @@
+{
+  "$id": "https://incpros.biz/schemas/intake.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "IncPros → PaperOS Intake Payload",
+  "type": "object",
+  "required": ["idempotency_key", "product", "customer", "entity", "paperos", "commerce"],
+  "properties": {
+    "idempotency_key": { "type": "string", "format": "uuid" },
+
+    "product": {
+      "type": "object",
+      "required": ["code", "name", "version"],
+      "properties": {
+        "code": { "type": "string", "enum": ["EE", "PS", "OC"] },
+        "name": { "type": "string" },
+        "version": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+
+    "customer": {
+      "type": "object",
+      "required": ["primary_contact"],
+      "properties": {
+        "primary_contact": {
+          "type": "object",
+          "required": ["name", "email"],
+          "properties": {
+            "name": { "type": "string", "minLength": 1 },
+            "email": { "type": "string", "format": "email" },
+            "phone": { "type": "string" }
+          },
+          "additionalProperties": false
+        },
+        "billing_address": {
+          "type": "object",
+          "properties": {
+            "line1": { "type": "string" },
+            "line2": { "type": "string" },
+            "city": { "type": "string" },
+            "region": { "type": "string" },
+            "postal_code": { "type": "string" },
+            "country": { "type": "string", "minLength": 2, "maxLength": 2 }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+
+    "entity": {
+      "type": "object",
+      "required": ["kind"],
+      "properties": {
+        "kind": { "type": "string", "enum": ["Business Venture", "Acquisition Vehicle"] },
+        "category": {
+          "type": "string",
+          "enum": [
+            "Solopreneur","SMB","High Growth Startup","Creative","US-International",
+            "SPV","Holding Company","Main St. Buyer","Platform Rollup","Independent Sponsor"
+          ]
+        },
+        "status": { "type": "string", "enum": ["New", "Existing"] },
+        "name": { "type": "string" },
+        "jurisdiction": { "type": "string" },
+        "foreign_qualifications": { "type": "array", "items": { "type": "string" } },
+        "entity_form": {
+          "type": "string",
+          "enum": ["LLC","Series LLC","C-Corp","S-Corp","GP","LP","PBC","501(c)(3)","Other"]
+        },
+        "ein": { "type": "string" },
+        "start_date": { "type": "string", "format": "date" }
+      },
+      "additionalProperties": false
+    },
+
+    "paperos": {
+      "type": "object",
+      "required": ["account_email"],
+      "properties": {
+        "account_email": { "type": "string", "format": "email" },
+        "team_invites": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["email"],
+            "properties": {
+              "name": { "type": "string" },
+              "email": { "type": "string", "format": "email" },
+              "role": { "type": "string" }
+            },
+            "additionalProperties": false
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+
+    "commerce": {
+      "type": "object",
+      "required": ["woocommerce","stripe"],
+      "properties": {
+        "woocommerce": {
+          "type": "object",
+          "required": ["order_currency","line_items","total_due","payment_status"],
+          "properties": {
+            "order_id": { "type": ["integer","null"] },
+            "order_currency": { "type": "string", "pattern": "^[A-Z]{3}$" },
+            "line_items": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "object",
+                "required": ["sku","qty","unit_price"],
+                "properties": {
+                  "sku": { "type": "string" },
+                  "qty": { "type": "integer", "minimum": 1 },
+                  "unit_price": { "type": "integer", "minimum": 0 }
+                },
+                "additionalProperties": false
+              }
+            },
+            "discounts": { "type": "array", "items": { "type": "string" } },
+            "surcharges": { "type": "array", "items": { "type": "string" } },
+            "fees_estimate": {
+              "type": "object",
+              "properties": {
+                "state_filing_fees": { "type": "integer", "minimum": 0 },
+                "registration_fees": { "type": "integer", "minimum": 0 }
+              },
+              "additionalProperties": false
+            },
+            "total_due": { "type": "integer", "minimum": 0 },
+            "payment_status": { "type": "string", "enum": ["pending","paid"] }
+          },
+          "additionalProperties": false
+        },
+        "stripe": {
+          "type": "object",
+          "properties": {
+            "payment_intent_id": { "type": ["string","null"] },
+            "status": {
+              "type": "string",
+              "enum": [
+                "requires_payment_method","requires_confirmation","succeeded","canceled","requires_action"
+              ]
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+
+    "attachments": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["label","url","type"],
+        "properties": {
+          "label": { "type": "string" },
+          "url": { "type": "string" },
+          "type": { "type": "string" }
+        },
+        "additionalProperties": false
+      }
+    },
+
+    "notes": { "type": "string" },
+
+    "ee_scope": { "$ref": "#/$defs/ee_scope" },
+    "ps_scope": { "$ref": "#/$defs/ps_scope" },
+    "oc_scope": { "$ref": "#/$defs/oc_scope" }
+  },
+
+  "allOf": [
+    {
+      "if": { "properties": { "product": { "properties": { "code": { "const": "EE" } } } } },
+      "then": { "required": ["ee_scope"] }
+    },
+    {
+      "if": { "properties": { "product": { "properties": { "code": { "const": "PS" } } } } },
+      "then": { "required": ["ps_scope"] }
+    },
+    {
+      "if": { "properties": { "product": { "properties": { "code": { "const": "OC" } } } } },
+      "then": { "required": ["oc_scope"] }
+    }
+  ],
+
+  "$defs": {
+    "ee_scope": {
+      "type": "object",
+      "properties": {
+        "formation": {
+          "type": "object",
+          "properties": {
+            "name_choices": { "type": "array", "items": { "type": "string" }, "maxItems": 3 },
+            "expedite": { "type": "boolean" },
+            "registered_agent": { "type": "string", "enum": ["Inc. Pros","Third-Party","Client"] },
+            "public_benefit": { "type": "boolean" }
+          },
+          "additionalProperties": false
+        },
+        "governance": {
+          "type": "object",
+          "properties": {
+            "documents": { "type": "array", "items": { "type": "string" } },
+            "founder_docs": { "type": "boolean" }
+          },
+          "additionalProperties": false
+        },
+        "banking_compliance": {
+          "type": "object",
+          "properties": {
+            "ein": { "type": "boolean" },
+            "bank_account_setup": {
+              "type": "object",
+              "properties": {
+                "provider": { "type": "string" },
+                "status": { "type": "string" }
+              },
+              "additionalProperties": false
+            },
+            "licenses": { "type": "array", "items": { "type": "string" } },
+            "bookkeeping_setup": { "type": "boolean" },
+            "registered_agent_services": { "type": "boolean" },
+            "annual_report_prep": { "type": "boolean" },
+            "mwdbE_certifications": { "type": "array", "items": { "type": "string" } }
+          },
+          "additionalProperties": false
+        },
+        "brand": {
+          "type": "object",
+          "properties": {
+            "domain_search": { "type": "array", "items": { "type": "string" } },
+            "brand_id_report": { "type": "boolean" },
+            "trademark": {
+              "type": "object",
+              "properties": {
+                "search": { "type": "boolean" },
+                "filings": { "type": "array", "items": { "type": "string" } }
+              },
+              "additionalProperties": false
+            }
+          },
+          "additionalProperties": false
+        },
+        "launch": {
+          "type": "object",
+          "properties": {
+            "top_priorities": { "type": "array", "items": { "type": "string" }, "maxItems": 5 },
+            "risk_flags_known": { "type": "array", "items": { "type": "string" }, "maxItems": 5 }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+
+    "ps_scope": {
+      "type": "object",
+      "properties": {
+        "filings": {
+          "type": "object",
+          "properties": {
+            "annual_reports": { "type": "boolean" },
+            "amendments_or_restatements": { "type": "array", "items": { "type": "string" } },
+            "conversions": { "type": "array", "items": { "type": "string" } },
+            "good_standing_certificates": { "type": "array", "items": { "type": "string" } },
+            "registered_agent_update": { "type": "boolean" }
+          },
+          "additionalProperties": false
+        },
+        "contracts": {
+          "type": "object",
+          "properties": {
+            "library": { "type": "array", "items": { "type": "string" } },
+            "reviews_required": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["title"],
+                "properties": {
+                  "title": { "type": "string" },
+                  "priority": { "type": "string", "enum": ["low","medium","high"] }
+                },
+                "additionalProperties": false
+              }
+            }
+          },
+          "additionalProperties": false
+        },
+        "brand_ip": {
+          "type": "object",
+          "properties": {
+            "domain_email_setup": {
+              "type": "object",
+              "properties": {
+                "domains": { "type": "array", "items": { "type": "string" } },
+                "status": { "type": "string" }
+              },
+              "additionalProperties": false
+            },
+            "trademark": {
+              "type": "object",
+              "properties": {
+                "search": { "type": "boolean" },
+                "filings": { "type": "array", "items": { "type": "string" } }
+              },
+              "additionalProperties": false
+            },
+            "copyrights": { "type": "array", "items": { "type": "string" } }
+          },
+          "additionalProperties": false
+        },
+        "back_office": {
+          "type": "object",
+          "properties": {
+            "doc_mgmt": { "type": "boolean" },
+            "e_sign": { "type": "boolean" },
+            "crm": { "type": "string" },
+            "accounting": { "type": "string" },
+            "data_room": { "type": "boolean" }
+          },
+          "additionalProperties": false
+        },
+        "strategy": {
+          "type": "object",
+          "properties": {
+            "focus_areas": { "type": "array", "items": { "type": "string" }, "maxItems": 5 },
+            "open_questions": { "type": "array", "items": { "type": "string" }, "maxItems": 5 }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+
+    "oc_scope": {
+      "type": "object",
+      "properties": {
+        "deal_overview": {
+          "type": "object",
+          "required": ["purpose","target_amount"],
+          "properties": {
+            "purpose": { "type": "string", "enum": ["Fundraise","M&A","Asset Purchase","Other"] },
+            "target_amount": { "type": "number", "minimum": 0 },
+            "stage": { "type": "string" },
+            "target_close_date": { "type": "string", "format": "date" }
+          },
+          "additionalProperties": false
+        },
+        "capital_stack": {
+          "type": "object",
+          "properties": {
+            "cap_table": {
+              "type": "object",
+              "properties": {
+                "create_or_update": { "type": "boolean" },
+                "provider": { "type": "string" }
+              },
+              "additionalProperties": false
+            },
+            "investor_pipeline": {
+              "type": "object",
+              "properties": {
+                "build": { "type": "boolean" },
+                "import_list": { "type": "boolean" }
+              },
+              "additionalProperties": false
+            },
+            "instruments": { "type": "array", "items": { "type": "string" } },
+            "securities_filings": {
+              "type": "object",
+              "properties": {
+                "reg_d": { "type": "boolean" },
+                "blue_sky": { "type": "array", "items": { "type": "string" } }
+              },
+              "additionalProperties": false
+            }
+          },
+          "additionalProperties": false
+        },
+        "financings": {
+          "type": "object",
+          "properties": {
+            "sba_7a": { "type": "boolean" },
+            "business_credit": { "type": "boolean" },
+            "debt_facilities": { "type": "array", "items": { "type": "string" } }
+          },
+          "additionalProperties": false
+        },
+        "transaction_documents": { "type": "array", "items": { "type": "string" } },
+        "investor_onboarding": {
+          "type": "object",
+          "properties": {
+            "kyc_aml": { "type": "boolean" },
+            "data_room": { "type": "boolean" },
+            "nda_management": { "type": "boolean" },
+            "transfer_agent": { "type": "boolean" }
+          },
+          "additionalProperties": false
+        },
+        "existing_resources": {
+          "type": "object",
+          "properties": {
+            "cap_table_file": { "type": ["string","null"] },
+            "deal_room_docs": { "type": "array", "items": { "type": "string" } },
+            "draft_agreements": { "type": "array", "items": { "type": "string" } }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

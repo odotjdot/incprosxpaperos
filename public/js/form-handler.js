@@ -198,11 +198,16 @@ document.addEventListener('DOMContentLoaded', function () {
 					method: 'POST',
 					headers: {
 						'Content-Type': 'application/json',
+						'X-IncPros-Signature': 'sha256=placeholder',
 					},
 					body: JSON.stringify(formDataStore),
 				})
 					.then((response) => {
 						if (response.ok) {
+							// Save form data to a session cookie
+							document.cookie = `incpros_form_data=${encodeURIComponent(
+								JSON.stringify(formDataStore),
+							)};path=/;samesite=strict`;
 							window.location.href = '/checkout';
 						}
 						return response.json();

@@ -11,7 +11,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 // Define the webhook secret.
-define( 'PAPEROS_WEBHOOK_SECRET', 'a_very_secure_randomly_generated_string' );
+define( 'INCPROS_WEBHOOK_SECRET', 'your-super-secret-key-here' );
 
 // Include the API routes class.
 require_once plugin_dir_path( __FILE__ ) . 'includes/class-api-routes.php';
@@ -24,3 +24,9 @@ require_once plugin_dir_path( __FILE__ ) . 'includes/class-form-shortcode.php';
 
 // Instantiate the form shortcode class.
 new IncPros_PaperOS_Form_Shortcode();
+
+// Include the WooCommerce integration class.
+require_once plugin_dir_path( __FILE__ ) . 'includes/class-woocommerce-integration.php';
+
+// Instantiate the WooCommerce integration class.
+new IncPros_PaperOS_WooCommerce_Integration();
